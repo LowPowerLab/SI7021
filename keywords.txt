@@ -1,0 +1,27 @@
+#######################################
+# Syntax Coloring Map for Si7021
+#######################################
+
+#######################################
+# Datatypes (KEYWORD1)
+#######################################
+
+SI7021	KEYWORD1
+
+#######################################
+# Methods and Functions (KEYWORD2)
+#######################################
+
+begin	KEYWORD2
+sensorExists	KEYWORD2
+getFahrenheitHundredths	KEYWORD2
+getCelsiusHundredths	KEYWORD2
+getHumidityPercent	KEYWORD2
+
+getSerialBytes	KEYWORD2
+getDeviceId	KEYWORD2
+setHeater	KEYWORD2
+
+#######################################
+# Constants (LITERAL1)
+#######################################
