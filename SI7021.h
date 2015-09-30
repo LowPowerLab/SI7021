@@ -2,6 +2,8 @@
   Copyright 2014 Marcus Sorensen <marcus@electron14.com>
 
 This program is licensed, please check with the copyright holder for terms
+
+Updated: Jul 16, 2015: TomWS1: eliminated Byte constants, fixed 'sizeof' error in _command(), added getTempAndRH() function to simplify calls for C & RH only
 */
 #ifndef si7021_h
 #define si7021_h
@@ -26,6 +28,12 @@ typedef struct si7021_env {
     unsigned int humidityBasisPoints;
 } si7021_env;
 
+// same as above but without fahrenheit parameter and RH %
+typedef struct si7021_thc {
+    int celsiusHundredths;
+    unsigned int humidityPercent;
+} si7021_thc;
+
 class SI7021
 {
   public:
@@ -37,11 +45,12 @@ class SI7021
     unsigned int getHumidityPercent();
     unsigned int getHumidityBasisPoints();
     struct si7021_env getHumidityAndTemperature();
+    struct si7021_thc getTempAndRH();
     int getSerialBytes(byte * buf);
     int getDeviceId();
     void setHeater(bool on);
   private:
-    void _command(byte * cmd, byte * buf );
+    void _command(byte cmd, byte * buf );
     void _writeReg(byte * reg, int reglen);
     int _readReg(byte * reg, int reglen);
     int _getCelsiusPostHumidity();

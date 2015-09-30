@@ -2,6 +2,11 @@
 Copyright 2014 Marcus Sorensen <marcus@electron14.com>
 
 This program is licensed, please check with the copyright holder for terms
+
+Updated: Jul 16, 2015: TomWS1: 
+        eliminated Byte constants, 
+        fixed 'sizeof' error in _command(), 
+        added getTempAndRH() function to simplify calls for C & RH only
 */
 #include "Arduino.h"
 #include "SI7021.h"
@@ -10,14 +15,16 @@ This program is licensed, please check with the copyright holder for terms
 #define I2C_ADDR 0x40
 
 // I2C commands
-byte RH_READ[]           = { 0xE5 };
-byte TEMP_READ[]         = { 0xE3 };
-byte POST_RH_TEMP_READ[] = { 0xE0 };
-byte RESET[]             = { 0xFE };
-byte USER1_READ[]        = { 0xE7 };
-byte USER1_WRITE[]       = { 0xE6 };
-byte SERIAL1_READ[]      = { 0xFA, 0x0F };
-byte SERIAL2_READ[]      = { 0xFC, 0xC9 };
+#define RH_READ             0xE5 
+#define TEMP_READ           0xE3 
+#define POST_RH_TEMP_READ   0xE0 
+#define RESET               0xFE 
+#define USER1_READ          0xE7 
+#define USER1_WRITE         0xE6 
+
+// compound commands
+byte SERIAL1_READ[]      ={ 0xFA, 0x0F };
+byte SERIAL2_READ[]      ={ 0xFC, 0xC9 };
 
 bool _si_exists = false;
 
@@ -71,9 +78,9 @@ unsigned int SI7021::getHumidityBasisPoints() {
     return ((12500 * humraw) >> 16) - 600;
 }
 
-void SI7021::_command(byte * cmd, byte * buf ) {
-    _writeReg(cmd, sizeof cmd);
-    _readReg(buf, sizeof buf);
+void SI7021::_command(byte cmd, byte * buf ) {
+    _writeReg(&cmd, sizeof cmd);
+    _readReg(buf, 2);
 }
 
 void SI7021::_writeReg(byte * reg, int reglen) {
@@ -121,7 +128,7 @@ void SI7021::setHeater(bool on) {
     } else {
         userbyte = 0x3A;
     }
-    byte userwrite[] = {USER1_WRITE[0], userbyte};
+    byte userwrite[] = {USER1_WRITE, userbyte};
     _writeReg(userwrite, sizeof userwrite);
 }
 
@@ -132,4 +139,15 @@ struct si7021_env SI7021::getHumidityAndTemperature() {
     ret.celsiusHundredths        = _getCelsiusPostHumidity();
     ret.fahrenheitHundredths     = (1.8 * ret.celsiusHundredths) + 3200;
     return ret;
+}
+
+// get temperature (C only) and RH Percent
+struct si7021_thc SI7021::getTempAndRH()
+{
+    si7021_thc ret;
+    
+    ret.humidityPercent   = getHumidityPercent();
+    ret.celsiusHundredths = _getCelsiusPostHumidity();
+    return ret;
+
 }
