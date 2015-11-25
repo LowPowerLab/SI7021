@@ -1,0 +1,12 @@
+{
+  "name": "Si7021",
+  "keywords": "Si7021, temperature, humidity, sensor, i2c",
+  "description": "Library for Si7021 high accuracy temperature and humidity sensor",
+  "repository":
+  {
+    "type": "git",
+    "url": "https://github.com/LowPowerLab/SI7021.git"
+  },
+  "frameworks": "arduino",
+  "platforms": "atmelavr"
+}
