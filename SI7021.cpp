@@ -31,8 +31,13 @@ bool _si_exists = false;
 SI7021::SI7021() {
 }
 
+#if defined(ARDUINO_ARCH_ESP8266)
+bool SI7021::begin(int SDA, int SCL) {
+    Wire.begin();
+#else
 bool SI7021::begin() {
     Wire.begin();
+#endif
     Wire.beginTransmission(I2C_ADDR);
     if (Wire.endTransmission() == 0) {
         _si_exists = true;
@@ -80,6 +85,9 @@ unsigned int SI7021::getHumidityBasisPoints() {
 
 void SI7021::_command(byte cmd, byte * buf ) {
     _writeReg(&cmd, sizeof cmd);
+#if defined(ARDUINO_ARCH_ESP8266)
+    delay(25);
+#endif
     _readReg(buf, 2);
 }
 
