@@ -17,6 +17,8 @@ Updated: Jul 16, 2015: TomWS1: eliminated Byte constants, fixed 'sizeof' error i
 #ifdef __AVR_ATtiny85__
  #include "TinyWireM.h"
  #define Wire TinyWireM
+#elif defined(ARDUINO_ARCH_ESP8266)
+ #include <Wire.h>
 #else
  #include <avr/pgmspace.h>
  #include <Wire.h>
@@ -38,7 +40,11 @@ class SI7021
 {
   public:
     SI7021();
+#if defined(ARDUINO_ARCH_ESP8266)
+    bool begin(int SDA, int SCL);
+#else
     bool begin();
+#endif
     bool sensorExists();
     int getFahrenheitHundredths();
     int getCelsiusHundredths();
