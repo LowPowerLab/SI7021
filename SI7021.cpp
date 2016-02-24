@@ -33,7 +33,7 @@ SI7021::SI7021() {
 
 #if defined(ARDUINO_ARCH_ESP8266)
 bool SI7021::begin(int SDA, int SCL) {
-    Wire.begin();
+    Wire.begin(SDA,SCL);
 #else
 bool SI7021::begin() {
     Wire.begin();
