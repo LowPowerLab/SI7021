@@ -110,23 +110,34 @@ int SI7021::_readReg(byte * reg, int reglen) {
     return 1;
 }
 
-//note this has crc bytes embedded, per datasheet, so provide 12 byte buf
 int SI7021::getSerialBytes(byte * buf) {
-    _writeReg(SERIAL1_READ, sizeof SERIAL1_READ);
-    _readReg(buf, 6);
- 
-    _writeReg(SERIAL2_READ, sizeof SERIAL2_READ);
-    _readReg(buf + 6, 6);
-    
-    // could verify crc here and return only the 8 bytes that matter
-    return 1;
+  byte serial[8];
+  _writeReg(SERIAL1_READ, sizeof SERIAL1_READ);
+  _readReg(serial, 8);
+  
+  //Page23 - https://www.silabs.com/Support%20Documents%2FTechnicalDocs%2FSi7021-A20.pdf
+  buf[0] = serial[0]; //SNA_3
+  buf[1] = serial[2]; //SNA_2
+  buf[2] = serial[4]; //SNA_1
+  buf[3] = serial[6]; //SNA_0
+
+  _writeReg(SERIAL2_READ, sizeof SERIAL2_READ);
+  _readReg(serial, 6);
+  buf[4] = serial[0]; //SNB_3 - device ID byte
+  buf[5] = serial[1]; //SNB_2
+  buf[6] = serial[3]; //SNB_1
+  buf[7] = serial[4]; //SNB_0
+  return 1;
 }
 
 int SI7021::getDeviceId() {
-    byte serial[12];
-    getSerialBytes(serial);
-    int id = serial[6];
-    return id;
+  //0x0D=13=Si7013
+  //0x14=20=Si7020
+  //0x15=21=Si7021
+  byte serial[8];
+  getSerialBytes(serial);
+  int id = serial[4];
+  return id;
 }
 
 void SI7021::setHeater(bool on) {
