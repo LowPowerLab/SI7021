@@ -3,10 +3,13 @@ Copyright 2014 Marcus Sorensen <marcus@electron14.com>
 
 This program is licensed, please check with the copyright holder for terms
 
-Updated: Jul 16, 2015: TomWS1: 
-        eliminated Byte constants, 
-        fixed 'sizeof' error in _command(), 
-        added getTempAndRH() function to simplify calls for C & RH only
+Updated:
+	* Jul 16, 2015: TomWS1: 
+		eliminated Byte constants, 
+		fixed 'sizeof' error in _command(), 
+		added getTempAndRH() function to simplify calls for C & RH only
+	* Aug 25, 2016: jlblancoc
+		added an optional timeout to all read functions to avoid infinite locks upon sensor failure or disconnection.
 */
 #include "Arduino.h"
 #include "SI7021.h"
@@ -54,41 +57,61 @@ int SI7021::getFahrenheitHundredths() {
     return (1.8 * c) + 3200;
 }
 
-int SI7021::getCelsiusHundredths() {
+int SI7021::getCelsiusHundredths(bool *timeout /*= NULL*/, int timeout_ms/*=0*/)
+{
     byte tempbytes[2];
-    _command(TEMP_READ, tempbytes);
+    if (!_command(TEMP_READ, tempbytes, timeout_ms)) {
+		if (timeout) *timeout = true;
+		return 0;
+	}
+	if (timeout) *timeout = false;
     long tempraw = (long)tempbytes[0] << 8 | tempbytes[1];
     return ((17572 * tempraw) >> 16) - 4685;
 }
 
-int SI7021::_getCelsiusPostHumidity() {
+int SI7021::_getCelsiusPostHumidity(bool *timeout /*= NULL*/, int timeout_ms/*=0*/)
+{
     byte tempbytes[2];
-    _command(POST_RH_TEMP_READ, tempbytes);
+    if (!_command(POST_RH_TEMP_READ, tempbytes, timeout_ms)) {
+		if (timeout) *timeout = true;
+		return 0;
+	}
+	if (timeout) *timeout = false;
     long tempraw = (long)tempbytes[0] << 8 | tempbytes[1];
     return ((17572 * tempraw) >> 16) - 4685;
 }
 
 
-unsigned int SI7021::getHumidityPercent() {
+unsigned int SI7021::getHumidityPercent(bool *timeout /*= NULL*/, int timeout_ms/*=0*/)
+{
     byte humbytes[2];
-    _command(RH_READ, humbytes);
+    if (!_command(RH_READ, humbytes, timeout_ms)) {
+		if (timeout) *timeout = true;
+		return 0;
+	}
+	if (timeout) *timeout = false;
     long humraw = (long)humbytes[0] << 8 | humbytes[1];
     return ((125 * humraw) >> 16) - 6;
 }
 
-unsigned int SI7021::getHumidityBasisPoints() {
+unsigned int SI7021::getHumidityBasisPoints(bool *timeout /*= NULL*/, int timeout_ms/*=0*/)
+{
     byte humbytes[2];
-    _command(RH_READ, humbytes);
+    if (!_command(RH_READ, humbytes, timeout_ms)) {
+		if (timeout) *timeout = true;
+		return 0;
+	}
+	if (timeout) *timeout = false;
     long humraw = (long)humbytes[0] << 8 | humbytes[1];
     return ((12500 * humraw) >> 16) - 600;
 }
 
-void SI7021::_command(byte cmd, byte * buf ) {
+bool SI7021::_command(byte cmd, byte * buf, int timeout_ms  ) {
     _writeReg(&cmd, sizeof cmd);
 #if defined(ARDUINO_ARCH_ESP8266)
     delay(25);
 #endif
-    _readReg(buf, 2);
+    return _readReg(buf, 2,timeout_ms);
 }
 
 void SI7021::_writeReg(byte * reg, int reglen) {
@@ -100,45 +123,52 @@ void SI7021::_writeReg(byte * reg, int reglen) {
     Wire.endTransmission();
 }
 
-int SI7021::_readReg(byte * reg, int reglen) {
+bool SI7021::_readReg(byte * reg, int reglen, int timeout_ms) {
     Wire.requestFrom(I2C_ADDR, reglen);
     while(Wire.available() < reglen) {
+		if (timeout_ms) 
+		{
+			if (!--timeout_ms)
+				return false;
+			delay(1);
+		}
     }
     for(int i = 0; i < reglen; i++) { 
         reg[i] = Wire.read(); 
     }
-    return 1;
+    return true;
 }
 
-int SI7021::getSerialBytes(byte * buf) {
-  byte serial[8];
-  _writeReg(SERIAL1_READ, sizeof SERIAL1_READ);
-  _readReg(serial, 8);
-  
-  //Page23 - https://www.silabs.com/Support%20Documents%2FTechnicalDocs%2FSi7021-A20.pdf
-  buf[0] = serial[0]; //SNA_3
-  buf[1] = serial[2]; //SNA_2
-  buf[2] = serial[4]; //SNA_1
-  buf[3] = serial[6]; //SNA_0
+bool SI7021::getSerialBytes(byte * buf,int timeout_ms) {
+	byte serial[8];
+	_writeReg(SERIAL1_READ, sizeof SERIAL1_READ);
+	if (!_readReg(serial, 8, timeout_ms))  return false;
+	
+	//Page23 - https://www.silabs.com/Support%20Documents%2FTechnicalDocs%2FSi7021-A20.pdf
+	buf[0] = serial[0]; //SNA_3
+	buf[1] = serial[2]; //SNA_2
+	buf[2] = serial[4]; //SNA_1
+	buf[3] = serial[6]; //SNA_0
 
-  _writeReg(SERIAL2_READ, sizeof SERIAL2_READ);
-  _readReg(serial, 6);
-  buf[4] = serial[0]; //SNB_3 - device ID byte
-  buf[5] = serial[1]; //SNB_2
-  buf[6] = serial[3]; //SNB_1
-  buf[7] = serial[4]; //SNB_0
-  return 1;
+	_writeReg(SERIAL2_READ, sizeof SERIAL2_READ);
+	if (!_readReg(serial, 6)) return false;
+	buf[4] = serial[0]; //SNB_3 - device ID byte
+	buf[5] = serial[1]; //SNB_2
+	buf[6] = serial[3]; //SNB_1
+	buf[7] = serial[4]; //SNB_0
+	return true;
 }
 
-int SI7021::getDeviceId() {
-  //0x0D=13=Si7013
-  //0x14=20=Si7020
-  //0x15=21=Si7021
-  byte serial[8];
-  getSerialBytes(serial);
-  int id = serial[4];
-  return id;
+uint8_t SI7021::getDeviceId(int timeout_ms /*= 0*/) {
+	//0x0D=13=Si7013
+	//0x14=20=Si7020
+	//0x15=21=Si7021
+	byte serial[8];
+	getSerialBytes(serial);
+	uint8_t id = serial[4];
+	return id;
 }
+
 
 void SI7021::setHeater(bool on) {
     byte userbyte;

@@ -47,19 +47,27 @@ class SI7021
 #endif
     bool sensorExists();
     int getFahrenheitHundredths();
-    int getCelsiusHundredths();
-    unsigned int getHumidityPercent();
-    unsigned int getHumidityBasisPoints();
+    int getCelsiusHundredths(bool *timeout = NULL, int timeout_ms=0);
+    unsigned int getHumidityPercent(bool *timeout = NULL, int timeout_ms=0);
+    unsigned int getHumidityBasisPoints(bool *timeout = NULL, int timeout_ms=0);
     struct si7021_env getHumidityAndTemperature();
     struct si7021_thc getTempAndRH();
-    int getSerialBytes(byte * buf);
-    int getDeviceId();
+	/** Return false on timeout */
+    bool getSerialBytes(byte * buf, int timeout_ms = 0);
+
+	/*Return: 
+	 * 0x0D=13=Si7013
+	 * 0x14=20=Si7020
+	 * 0x15=21=Si7021
+	 */
+    uint8_t getDeviceId(int timeout_ms = 0);
     void setHeater(bool on);
   private:
-    void _command(byte cmd, byte * buf );
+    bool _command(byte cmd, byte * buf, int timeout_ms = 0 );
     void _writeReg(byte * reg, int reglen);
-    int _readReg(byte * reg, int reglen);
-    int _getCelsiusPostHumidity();
+	/** return true on success, false on timeout. If timeout_ms is 0, infinite wait. */
+    bool _readReg(byte * reg, int reglen, int timeout_ms=0);
+    int _getCelsiusPostHumidity(bool *timeout = NULL, int timeout_ms=0);
 };
 
 #endif
