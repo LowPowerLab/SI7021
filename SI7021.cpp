@@ -139,25 +139,36 @@ bool SI7021::_readReg(byte * reg, int reglen, int timeout_ms) {
     return true;
 }
 
-//note this has crc bytes embedded, per datasheet, so provide 12 byte buf
 bool SI7021::getSerialBytes(byte * buf,int timeout_ms) {
-    _writeReg(SERIAL1_READ, sizeof SERIAL1_READ);
-    if (!_readReg(buf, 6,timeout_ms)) return false;
- 
-    _writeReg(SERIAL2_READ, sizeof SERIAL2_READ);
-    if (!_readReg(buf + 6, 6,timeout_ms)) return false;
-    
-    // could verify crc here and return only the 8 bytes that matter
-    return true;
+	byte serial[8];
+	_writeReg(SERIAL1_READ, sizeof SERIAL1_READ);
+	if (!_readReg(serial, 8, timeout_ms))  return false;
+	
+	//Page23 - https://www.silabs.com/Support%20Documents%2FTechnicalDocs%2FSi7021-A20.pdf
+	buf[0] = serial[0]; //SNA_3
+	buf[1] = serial[2]; //SNA_2
+	buf[2] = serial[4]; //SNA_1
+	buf[3] = serial[6]; //SNA_0
+
+	_writeReg(SERIAL2_READ, sizeof SERIAL2_READ);
+	if (!_readReg(serial, 6)) return false;
+	buf[4] = serial[0]; //SNB_3 - device ID byte
+	buf[5] = serial[1]; //SNB_2
+	buf[6] = serial[3]; //SNB_1
+	buf[7] = serial[4]; //SNB_0
+	return true;
 }
 
-int SI7021::getDeviceId(int timeout_ms /*= 0*/)
-{
-    byte serial[12];
-    getSerialBytes(serial,timeout_ms);
-    int id = serial[6];
-    return id;
+uint8_t SI7021::getDeviceId(int timeout_ms /*= 0*/) {
+	//0x0D=13=Si7013
+	//0x14=20=Si7020
+	//0x15=21=Si7021
+	byte serial[8];
+	getSerialBytes(serial);
+	uint8_t id = serial[4];
+	return id;
 }
+
 
 void SI7021::setHeater(bool on) {
     byte userbyte;
