@@ -54,7 +54,13 @@ class SI7021
     struct si7021_thc getTempAndRH();
 	/** Return false on timeout */
     bool getSerialBytes(byte * buf, int timeout_ms = 0);
-    int getDeviceId(int timeout_ms = 0);
+
+	/*Return: 
+	 * 0x0D=13=Si7013
+	 * 0x14=20=Si7020
+	 * 0x15=21=Si7021
+	 */
+    uint8_t getDeviceId(int timeout_ms = 0);
     void setHeater(bool on);
   private:
     bool _command(byte cmd, byte * buf, int timeout_ms = 0 );
