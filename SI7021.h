@@ -54,6 +54,7 @@ class SI7021
     struct si7021_thc getTempAndRH();
     int getSerialBytes(byte * buf);
     int getDeviceId();
+    void setPrecision(byte setting);
     void setHeater(bool on);
   private:
     void _command(byte cmd, byte * buf );
