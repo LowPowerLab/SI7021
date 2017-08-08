@@ -102,8 +102,7 @@ void SI7021::_writeReg(byte * reg, int reglen) {
 
 int SI7021::_readReg(byte * reg, int reglen) {
     Wire.requestFrom(I2C_ADDR, reglen);
-    while(Wire.available() < reglen) {
-    }
+    //while(Wire.available() < reglen); //remove redundant loop-wait per https://github.com/LowPowerLab/SI7021/issues/12
     for(int i = 0; i < reglen; i++) { 
         reg[i] = Wire.read(); 
     }
