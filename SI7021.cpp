@@ -139,16 +139,16 @@ int SI7021::getDeviceId() {
   return id;
 }
 
-// 00 = 14 bit temp, 12 bit RH
-// 01 = 12 bit temp, 8 bit RH
-// 10 = 13 bit temp, 10 bit RH (default)
-// 11 = 11 bit temp, 11 bit RH
+// 0x00 = 14 bit temp, 12 bit RH (default)
+// 0x01 = 12 bit temp, 8 bit RH
+// 0x80 = 13 bit temp, 10 bit RH
+// 0x81 = 11 bit temp, 11 bit RH
 void SI7021::setPrecision(byte setting) {
     byte reg = USER1_READ;
     _writeReg(&reg, 1);
     _readReg(&reg, 1);
 
-    reg = (reg & 0xFC) | (setting & 3);
+    reg = (reg & 0x7E) | (setting & 0x81);
     byte userwrite[] = {USER1_WRITE, reg};
     _writeReg(userwrite, sizeof userwrite);
 }
