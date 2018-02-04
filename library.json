@@ -8,5 +8,5 @@
     "url": "https://github.com/LowPowerLab/SI7021.git"
   },
   "frameworks": "arduino",
-  "platforms": "atmelavr"
+  "platforms": "*"
 }
