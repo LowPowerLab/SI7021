@@ -17,10 +17,14 @@ Updated: Jul 16, 2015: TomWS1: eliminated Byte constants, fixed 'sizeof' error i
 #ifdef __AVR_ATtiny85__
  #include "TinyWireM.h"
  #define Wire TinyWireM
-#elif defined(ARDUINO_ARCH_ESP8266)
+#elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
  #include <Wire.h>
 #else
- #include <avr/pgmspace.h>
+ #if (defined(__AVR__))
+  #include <avr\pgmspace.h>
+ #else
+  #include <pgmspace.h>
+ #endif
  #include <Wire.h>
 #endif
 
@@ -40,7 +44,7 @@ class SI7021
 {
   public:
     SI7021();
-#if defined(ARDUINO_ARCH_ESP8266)
+#if defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
     bool begin(int SDA, int SCL);
 #else
     bool begin();
