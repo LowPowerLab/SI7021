@@ -20,8 +20,8 @@ Updated: Jul 16, 2015: TomWS1: eliminated Byte constants, fixed 'sizeof' error i
 #elif defined(ARDUINO_ARCH_ESP8266) || defined(ARDUINO_ARCH_ESP32)
  #include <Wire.h>
 #else
- #if (defined(__AVR__))
-  #include <avr\pgmspace.h>
+ #if (defined(__AVR__)) || defined(ARDUINO_ARCH_NRF5)
+  #include <avr/pgmspace.h>
  #else
   #include <pgmspace.h>
  #endif
