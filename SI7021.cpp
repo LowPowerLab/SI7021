@@ -153,6 +153,12 @@ void SI7021::setPrecision(byte setting) {
     _writeReg(userwrite, sizeof userwrite);
 }
 
+// NOTE on setHeater() function:
+// Depending if 'on' parameter it sets it to:
+// - 0x3A (0011_1010 - POR default) for OFF
+// - 0x3E (0011_1110) for ON
+// This resets the resolution bits to 00 in both cases - which is maximum resolution (12bit RH and 14bit Temp)
+// For User1 register usage see p26 (section 6) in DSheet https://www.silabs.com/documents/public/data-sheets/Si7021-A20.pdf
 void SI7021::setHeater(bool on) {
     byte userbyte;
     if (on) {
